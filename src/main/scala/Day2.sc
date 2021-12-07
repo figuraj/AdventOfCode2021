@@ -24,7 +24,8 @@ def follow_instructions(instructions: List[(String,Int)]) = {
 }
 
 def main(inputs: List[String]) = {
-  follow_instructions(prepare_inputs(inputs))
+  // follow_instructions(prepare_inputs(inputs))
+  (prepare_inputs _ andThen follow_instructions)(inputs)
 }
 
 val position = main(inputs)
