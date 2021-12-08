@@ -27,52 +27,24 @@ case class HorizontalLine(line: (point,point)) extends Line
 case class VerticalLine(line: (point,point)) extends Line
 case class DiagonalLine(line: (point,point)) extends Line
 
-
-def getHorizontalLines(line_coords: List[(point,point)]): List[HorizontalLine] = {
-  line_coords.filter{ line =>
+def getLines(line_coords: List[(point,point)]): List[Line] = {
+  line_coords.map{ line =>
     val (x1,y1) = line._1
     val (x2,y2) = line._2
-    x1==x2
-  }.map(line => HorizontalLine(line))
+    if (x1==x2) HorizontalLine(line)
+    else if (y1==y2) VerticalLine(line)
+    else if (abs(x1-x2)==abs(y1-y2)) DiagonalLine(line)
+    else throw new Exception("Neither horizontal, vertical or diagonal line")
+  }
 }
-
-def getVerticalLines(line_coords: List[(point,point)]): List[VerticalLine] = {
-  line_coords.filter{ line =>
-    val (x1,y1) = line._1
-    val (x2,y2) = line._2
-    y1==y2
-  }.map(line => VerticalLine(line))
-}
-
-def getDiagonalLines(line_coords: List[(point,point)]): List[DiagonalLine] = {
-  line_coords.filter{ line =>
-    val (x1,y1) = line._1
-    val (x2,y2) = line._2
-    abs(x1-x2)==abs(y1-y2)
-  }.map(line => DiagonalLine(line))
-}
-
-val line_coords_input = parseInputs(inputs)
-val horizontal_lines = getHorizontalLines(line_coords_input)
-val vertical_lines = getVerticalLines(line_coords_input)
-//val point_lines = getStraightLines(line_coords_input)((x1,y1,x2,y2) => x1==x2 && y1==y2)
-val diagonal_lines = getDiagonalLines(line_coords_input)
-
-//val ocean_floor: Map[Int,Map[Int, Int]] =
 
 def getPointsFromLine(line: Line): List[point]= {
   line match {
-    case HorizontalLine(line_coords) =>
-      val (x1, y1) = line_coords._1
-      val (x2, y2) = line_coords._2
+    case HorizontalLine(((x1,y1),(x2,y2))) =>
       (for (i <- min(y1,y2) to max(y1,y2)) yield (x1, i)).toList
-    case VerticalLine(line_coords) =>
-      val (x1, y1) = line_coords._1
-      val (x2, y2) = line_coords._2
+    case VerticalLine(((x1,y1),(x2,y2))) =>
       (for (i <- min(x1,x2) to max(x1,x2)) yield (i, y1)).toList
-    case DiagonalLine(line_coords) =>
-      val (x1, y1) = line_coords._1
-      val (x2, y2) = line_coords._2
+    case DiagonalLine(((x1,y1),(x2,y2))) =>
       if (x2>x1) {
         if (y2>y1) (for (i <- x1 to x2) yield (i, y1+(i-x1))).toList
         else (for (i <- x1 to x2) yield (i, y1-(i-x1))).toList
@@ -82,16 +54,6 @@ def getPointsFromLine(line: Line): List[point]= {
       }
   }
 }
-
-getPointsFromLine(VerticalLine((21,268),(30,268)))
-getPointsFromLine(VerticalLine((30,268),(21,268)))
-getPointsFromLine(HorizontalLine((21,268),(21,275)))
-getPointsFromLine(HorizontalLine((21,275),(21,268)))
-getPointsFromLine(HorizontalLine((21,275),(21,268)))
-getPointsFromLine(DiagonalLine((705,62),(702,65)))
-getPointsFromLine(DiagonalLine((702,65),(705,62)))
-getPointsFromLine(DiagonalLine((702,62),(705,65)))
-getPointsFromLine(DiagonalLine((705,65),(702,62)))
 
 def updateOceanFloor(ocean_floor: Map[(Int,Int), Int], points: List[point]): Map[(Int,Int), Int] = {
   def iter(active_point: point, remaining_points: List[point], updated_ocean_floor: Map[(Int,Int), Int]): Map[(Int,Int), Int] = {
@@ -105,29 +67,42 @@ def countOverlap(ocean_floor: Map[(Int,Int), Int]): Int = {
   ocean_floor.foldLeft(0)((accum,point_overlaps) => if (point_overlaps._2 > 1) accum+1 else accum)
 }
 
-def main_part1(inputs: List[String]) = {
+def main_part1(inputs: List[String]):Int = {
   val line_coords_input = parseInputs(inputs)
-  val horizontal_lines = getHorizontalLines(line_coords_input)
-  val vertical_lines = getVerticalLines(line_coords_input)
-  val points_horizontal = (for (line <- horizontal_lines) yield getPointsFromLine(line)).flatten
-  val points_vertical = (for (line <- vertical_lines) yield getPointsFromLine(line)).flatten
-  val final_ocean_floor = updateOceanFloor(Map(),points_horizontal ::: points_vertical)
+  val points = (for {line <- getLines(line_coords_input)
+                     if {line match { case HorizontalLine(_) => true
+                                      case VerticalLine(_) => true
+                                      case _ => false}}}
+                     yield getPointsFromLine(line)).flatten
+  val final_ocean_floor = updateOceanFloor(Map(), points)
   countOverlap(final_ocean_floor)
 }
 
 main_part1(inputs)
 
-def main_part2(inputs: List[String]) = {
+def main_part2(inputs: List[String]): Int = {
   val line_coords_input = parseInputs(inputs)
-  val horizontal_lines = getHorizontalLines(line_coords_input)
-  val vertical_lines = getVerticalLines(line_coords_input)
-  val diagonal_lines = getDiagonalLines(line_coords_input)
-  val points_horizontal = (for (line <- horizontal_lines) yield getPointsFromLine(line)).flatten
-  val points_vertical = (for (line <- vertical_lines) yield getPointsFromLine(line)).flatten
-  val points_diagonal = (for (line <- diagonal_lines) yield getPointsFromLine(line)).flatten
-  val final_ocean_floor = updateOceanFloor(Map(),points_horizontal ::: points_vertical ::: points_diagonal)
+  val points = (for (line <- getLines(line_coords_input)) yield getPointsFromLine(line)).flatten
+  val final_ocean_floor = updateOceanFloor(Map(), points)
   countOverlap(final_ocean_floor)
 }
 
 main_part2(inputs)
+
+
+// Tests
+val line_coords_input = parseInputs(inputs)
+val horizontal_lines = getLines(line_coords_input).filter{case HorizontalLine(_) => true;  case _ => false}
+val vertical_lines = getLines(line_coords_input).filter{case VerticalLine(_) => true;  case _ => false}
+val diagonal_lines = getLines(line_coords_input).filter{case DiagonalLine(_) => true;  case _ => false}
+
+getPointsFromLine(VerticalLine((21,268),(30,268)))
+getPointsFromLine(VerticalLine((30,268),(21,268)))
+getPointsFromLine(HorizontalLine((21,268),(21,275)))
+getPointsFromLine(HorizontalLine((21,275),(21,268)))
+getPointsFromLine(HorizontalLine((21,275),(21,268)))
+getPointsFromLine(DiagonalLine((705,62),(702,65)))
+getPointsFromLine(DiagonalLine((702,65),(705,62)))
+getPointsFromLine(DiagonalLine((702,62),(705,65)))
+getPointsFromLine(DiagonalLine((705,65),(702,62)))
 
