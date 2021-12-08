@@ -29,24 +29,10 @@ def parseInputs(inputs: List[String]): List[Line] = {
   }
 }
 
-def updateOceanFloor(ocean_floor: Map[Point, Int], points: List[Point]): Map[Point, Int] = {
-  def iter(active_point: Point, remaining_points: List[Point], updated_ocean_floor: Map[Point, Int]): Map[Point, Int] = {
-    if (remaining_points.isEmpty) updated_ocean_floor + (active_point -> (updated_ocean_floor(active_point) + 1))
-    else iter(remaining_points.head, remaining_points.tail, updated_ocean_floor + (active_point -> (updated_ocean_floor(active_point) + 1) ))
-  }
-  iter(points.head,points.tail, ocean_floor.withDefaultValue(0))
-}
-
-def countOverlap(ocean_floor: Map[Point, Int]): Int = {
-  ocean_floor.foldLeft(0){case (accum,(Point(_,_),overlap_count)) => if (overlap_count > 1) accum+1 else accum}
-
-}
-
 def main_part1(inputs: List[String]):Int = {
   val lines = parseInputs(inputs)
   val points = lines.filter { case Line(x1,y1,x2,y2) => (x1==x2) || (y1==y2) }.flatMap(_.getPoints)
-  val final_ocean_floor = updateOceanFloor(Map(), points)
-  countOverlap(final_ocean_floor)
+  points.groupBy(x=>x).map(x => x._2.length).count(_>1)
 }
 
 main_part1(inputs)
@@ -54,8 +40,7 @@ main_part1(inputs)
 def main_part2(inputs: List[String]):Int = {
   val lines = parseInputs(inputs)
   val points = lines.filter { case Line(x1,y1,x2,y2) => (x1==x2) || (y1==y2) || (abs(x1-x2)==abs(y1-y2)) }.flatMap(_.getPoints)
-  val final_ocean_floor = updateOceanFloor(Map(), points)
-  countOverlap(final_ocean_floor)
+  points.groupBy(x=>x).map(x => x._2.length).count(_>1)
 }
 
 main_part2(inputs)
