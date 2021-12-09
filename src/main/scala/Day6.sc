@@ -2,8 +2,8 @@ import scala.io.Source
 val in = Source.fromFile(getClass.getResource("/inputs/06_input.txt").getFile)
 val inputs = in.getLines().toList
 
-def parseInputs(inputs: List[String]): Seq[Int] = {
-  inputs.flatMap(line => line.split(",")).map(_.toInt).toVector
+def parseInputs(inputs: List[String]): List[Int] = {
+  inputs.flatMap(line => line.split(",")).map(_.toInt)
 }
 
 case class FishByAge(zero: Long, one: Long, two: Long, three: Long,
@@ -16,17 +16,13 @@ val pool = FishByAge(fishmap(0), fishmap(1), fishmap(2),
                      fishmap(3), fishmap(4), fishmap(5),
                      fishmap(6), fishmap(7), fishmap(8))
 
-def round(pool: FishByAge): FishByAge = {
-  pool match {
-    case FishByAge(zero, one, two, three, four, five, six, seven, eight) =>
-      FishByAge(one, two, three, four, five, six, seven+zero, eight, zero)
-    }
-}
-
 def main(pool: FishByAge, rounds: Int): FishByAge = {
   def iter(pending: FishByAge, accum: Int): FishByAge = {
     if (accum == rounds) pending
-    else iter(round(pending), accum+1)
+    else pending match {
+      case FishByAge(zero, one, two, three, four, five, six, seven, eight) =>
+        iter(FishByAge(one, two, three, four, five, six, seven+zero, eight, zero), accum+1)
+    }
   }
   iter(pool,0)
 }
