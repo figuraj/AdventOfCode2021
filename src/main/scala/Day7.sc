@@ -6,26 +6,28 @@ val inputs = in.getLines().next()
 def parseInputs(inputs: String): List[Int] = {
   inputs.split(",").map(_.toInt).toList
 }
+
+def getMedian(lst: List[Int]): Int = {
+  val sorted_lst = lst.sorted
+  if (sorted_lst.length % 2 == 1) sorted_lst(sorted_lst.length/2)
+  else round((sorted_lst(sorted_lst.length/2)+sorted_lst(sorted_lst.length/2+1))/2)
+}
+
 val crab_inputs = parseInputs(inputs)
-//val crab_inputs = List(16,1,2,0,4,2,7,1,2,14)
+val results_part1 = crab_inputs.foldLeft(0)((accum, elem) => accum + abs(elem-getMedian(crab_inputs)))
 
-val sorted_crabs = crab_inputs.sorted
-val crabs_count = sorted_crabs.length
-val median_index = if (crabs_count % 2 == 0) List(crabs_count/2, crabs_count/2-1) else List(crabs_count/2)
-
-val result_part1 = (for (median_candidate <- median_index) yield
-  crab_inputs.foldLeft(0)((accum, crab) => accum + abs(crab-sorted_crabs(median_candidate)))).min
-
-
-sorted_crabs(5)
-crab_inputs.sum/5
-def fuel(from: Int, to: Int): Int = {
+// **** Part 2
+implicit def fuel(from: Int, to: Int): Int = {
   def iter(from: Int, to: Int, accum: Int): Int = {
     if (from==to) accum else iter(from+1, to, accum+(to-from))
   }
   iter(min(from,to),max(from,to),0)
 }
-def cost_function(lst: List[Int], x: Int) = lst.foldLeft(0)((accum, elem) => accum+fuel(elem,x))
+def cost_function(lst: List[Int], x: Int)(implicit f: (Int,Int) => Int): Int =
+  lst.foldLeft(0)((accum, elem) => accum+f(elem,x))
 
-(for (x <- crab_inputs.min to crab_inputs.max) yield (cost_function(crab_inputs,x))).min
+def bruteForceSolver(lst: List[Int])(cost_function: (List[Int], Int) => Int): Int = {
+  (for (x <- lst.min to lst.max) yield cost_function(lst,x)).min
+}
+val results_part2 = bruteForceSolver(crab_inputs)(cost_function)
 
