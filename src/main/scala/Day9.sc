@@ -4,35 +4,34 @@ val in = Source.fromFile(getClass.getResource("/inputs/09_input.txt").getFile)
 val inputs = in.getLines().toList.map(line => line.map(_.asDigit).toList)//.map(_.asDigit)
 
 case class Point(x: Int, y: Int, height: Int) {
-  def getCoordinates: (Int,Int) = (x,y)
+  def getCoordinates: (Int, Int) = (x, y)
+
   def <(num: Int): Boolean = this.height < num
+
+  def <(that: Point): Boolean = this.height < that.height
 }
 
-case class Field(points: Set[Point])  {
-  def getPoint(x: Int, y: Int): Point = {
-    points.filter {
-      case Point(x1,y1, height) => x==x1 && y==y1
-    }.head
-  }
-
-  def getPointNeighbors(x: Int, y: Int): Set[Point] = {
-    val candidates = Set((x - 1,y),(x + 1,y),(x,y - 1),(x,y + 1))
-    candidates
-      .filter(p => p._1 >= 0 && p._1 <=99 && p._2 >=0 && p._2 <= 99)
-      .map(x => getPoint(x._1,x._2))
-  }
-  def getPointNeighbors(point: Point): Set[Point] = {
-    getPointNeighbors(point.x,point.y)
-  }
+def getPoint(x: Int, y: Int, field: Set[Point]): Point = {
+  field.filter {
+    case Point(x1, y1, height) => x == x1 && y == y1
+  }.head
 }
 
-val field = Field((for (x <- 0 to 99; y <- 0 to 99) yield Point(x,y,inputs(x)(y))).toSet)
-//field.getPointNeighbors(1,1)
+def getPointNeighbors(point: Point, field: Set[Point]): Set[Point] = {
+  val (x, y) = point match {case Point(x,y,_) => (x,y)}
+  val candidates = Set((x - 1,y),(x + 1,y),(x,y - 1),(x,y + 1))
+  candidates
+    .filter(p => (0 to 99).contains(p._1) && (0 to 99).contains(p._2))
+    .map(x => getPoint(x._1,x._2, field))
+}
+
+val field: Set[Point] = (for (x <- 0 to 99; y <- 0 to 99) yield Point(x,y,inputs(x)(y))).toSet
 
 val low_points = (for {i <- 0 to 99
                        j <- 0 to 99
-                       if field.getPointNeighbors(i,j).forall(point => point.height > field.getPoint(i,j).height)}
-yield field.getPoint(i,j)).toList
+                       point = getPoint(i,j,field)
+                       if getPointNeighbors(point, field).forall(point < _)}
+yield point).toList
 
 val result_part1 = low_points.map(_.height + 1).sum
 
@@ -42,16 +41,14 @@ def getBasin(low_point: Point): Set[Point] = {
       accepted
     } else {
       if (unchecked.head < 9) {
-        val neighbors = field.getPointNeighbors(unchecked.head)
-        iter(unchecked.tail ++ neighbors -- discarded -- accepted, discarded, accepted ++ Set(unchecked.head))
+        val neighbors = getPointNeighbors(unchecked.head, field)
+        iter(unchecked.tail ++ neighbors -- discarded -- accepted, discarded, accepted + unchecked.head)
       } else {
-        iter(unchecked.tail, discarded ++ Set(unchecked.head), accepted)
+        iter(unchecked.tail, discarded + unchecked.head, accepted)
       }
     }
   }
   iter(Set(low_point),Set(),Set())
 }
 
-getBasin(low_points.head).size
-
-low_points.map(getBasin).map(_.size).sorted.takeRight(3).product
+val result_part2 = low_points.map(getBasin).map(_.size).sorted.takeRight(3).product
