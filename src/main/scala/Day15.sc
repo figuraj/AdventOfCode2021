@@ -1,6 +1,7 @@
 import scala.annotation.tailrec
 import scala.io.Source
 import scala.math.{abs,pow,sqrt}
+import scala.util.Sorting.quickSort
 
 val in = Source.fromFile(getClass.getResource("/inputs/15_input.txt").getFile)
 val inputs = in.getLines().toList
@@ -24,15 +25,12 @@ case class NodeNonEmpty(coordinates: (Int,Int), cost: Int, previous: Node) exten
       case NodeNonEmpty(x,_,_) => x
       case _ => (-1,-1)
     }
-    (for {i <- List(-1,0,1)
-          j <- List(-1,0,1)
-          candidate_coordinates = (coordinates._1 + i, coordinates._2 + j)
-          if (previous_coordinates != candidate_coordinates) &&
-            (abs(i) + abs(j) == 1)
-          }
-      yield candidate_coordinates -> field.get(candidate_coordinates).toArray)
+    Array((coordinates._1 + 1, coordinates._2),     (coordinates._1 - 1, coordinates._2),
+         (coordinates._1    , coordinates._2 + 1), (coordinates._1    , coordinates._2 - 1))
+      .filterNot(_ == previous_coordinates)
+      .map(x => x -> field.get(x).toArray)
       .filter(_._2.length == 1)
-      .map(x => NodeNonEmpty(x._1, cost + x._2.head, this)).toArray
+      .map(x => NodeNonEmpty(x._1, cost + x._2.head, this))
   }
 
   override def isEnd(coordinates: (Int, Int)): Boolean = this.coordinates == coordinates
@@ -60,8 +58,10 @@ case class NodeEmpty(cost: Int = 0) extends Node {
 def insertIntoQueue(prio_queue: Array[Node], next: Array[Node], end: (Int, Int)): Array[Node] = {
   //implicit val NodeOrdering: Ordering[NodeNonEmpty] = Ordering.by(_.cost)
   implicit val NodeOrdering: Ordering[Node] = Ordering.by(_.getCostWithHeuristic(end))
+  //implicit val NodeOrdering: Ordering[Node] = Ordering.by(_.getCost) // arrays and get cost 1:42 vs heuristic 1:00
 
-//  val prio_and_next =  (next ++ prio_queue)
+
+  //  val prio_and_next =  (next ++ prio_queue)
 //  val prio_min = prio_and_next.min
 //  prio_min +: prio_and_next.filterNot(_ == prio_min)
 
