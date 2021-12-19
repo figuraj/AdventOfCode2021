@@ -14,10 +14,11 @@ def parseInputs(inputs: List[String]): Map[(Int,Int), Int] = {
 }
 
 case class Node(coordinates: (Int,Int), cost: Int) {
-  def getNeighbors(field: Map[(Int,Int), Int]): Array[Node] = {
+  def getNeighbors(field: Map[(Int,Int), Int], previous: (Int,Int)): Array[Node] = {
     Array((coordinates._1 + 1, coordinates._2),     (coordinates._1 - 1, coordinates._2),
          (coordinates._1    , coordinates._2 + 1), (coordinates._1    , coordinates._2 - 1))
       .filter(x => (x._1 <= 99) && x._1 >= 0 && x._2 <= 99 && x._2 >= 0)
+      .filterNot(_ == previous)
       .map(x => Node(x, cost + field(x)))
   }
 
@@ -38,9 +39,9 @@ def solve(field: Map[(Int,Int), Int], start: (Int,Int), end: (Int,Int)): Int = {
     if (prio_queue.head.isEnd(end)) {
       prio_queue.head.cost
     } else {
-      val next = prio_queue.head.getNeighbors(field)
+      val next = prio_queue.head.getNeighbors(field, previous)
       val next_filtered = next.filterNot{ x => prio_queue.exists{y =>
-        y.coordinates == x.coordinates} || (previous == x.coordinates) }
+        y.coordinates == x.coordinates}  } //|| (previous == x.coordinates)
       iter(insertIntoQueue(prio_queue.tail, next_filtered),prio_queue.head.coordinates)
     }
   }
