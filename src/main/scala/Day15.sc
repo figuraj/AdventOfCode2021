@@ -34,6 +34,8 @@ case class NodeNonEmpty(coordinates: (Int,Int), cost: Int, previous: Node) exten
   }
 
   override def isEnd(coordinates: (Int, Int)): Boolean = this.coordinates == coordinates
+
+  def getCostWithHeuristic(end: (Int, Int)): Int = cost + abs(end._1 - coordinates._1) + abs(end._2 - coordinates._2)
 }
 
 case class NodeEmpty(cost: Int = 0) extends Node {
@@ -44,8 +46,10 @@ case class NodeEmpty(cost: Int = 0) extends Node {
     throw new Error("isEnd of NodeEmpty")
 }
 
-def insertIntoQueue(prio_queue: Vector[NodeNonEmpty], next: Vector[NodeNonEmpty]): Vector[NodeNonEmpty] = {
-  implicit val NodeOrdering: Ordering[NodeNonEmpty] = Ordering.by(_.cost)
+def insertIntoQueue(prio_queue: Vector[NodeNonEmpty], next: Vector[NodeNonEmpty], end: (Int, Int)): Vector[NodeNonEmpty] = {
+  //implicit val NodeOrdering: Ordering[NodeNonEmpty] = Ordering.by(_.cost)
+  implicit val NodeOrdering: Ordering[NodeNonEmpty] = Ordering.by(_.getCostWithHeuristic(end))
+
   def insertElem[T](x: T, lst: Vector[T])(implicit ord: Ordering[T]): Vector[T] = {
     lst match {
       case Vector() => Vector(x)
@@ -89,7 +93,7 @@ def solve(field: Map[(Int,Int), Int], start: (Int,Int), end: (Int,Int)): Int = {
 //      prio_queue.tail.foreach(x => println(x.coordinates, x.cost))
 
       val next_filtered = next.filterNot(x => prio_queue.exists(y => y.coordinates == x.coordinates))
-      val new_prio_queue = insertIntoQueue(prio_queue.tail, next_filtered)
+      val new_prio_queue = insertIntoQueue(prio_queue.tail, next_filtered, end)
 //      println("Newprio: ")
 //      new_prio_queue.foreach(x => println(x.coordinates, x.cost))
       //println(new_prio_queue.length)
