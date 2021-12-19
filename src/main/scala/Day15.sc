@@ -1,6 +1,6 @@
 import scala.annotation.tailrec
 import scala.io.Source
-import scala.math.abs
+import scala.math.{abs,pow,sqrt}
 
 val in = Source.fromFile(getClass.getResource("/inputs/15_input.txt").getFile)
 val inputs = in.getLines().toList
@@ -36,6 +36,7 @@ case class NodeNonEmpty(coordinates: (Int,Int), cost: Int, previous: Node) exten
   override def isEnd(coordinates: (Int, Int)): Boolean = this.coordinates == coordinates
 
   def getCostWithHeuristic(end: (Int, Int)): Int = cost + abs(end._1 - coordinates._1) + abs(end._2 - coordinates._2)
+    //sqrt(pow(end._1 - coordinates._1,2).toInt + pow((end._2 - coordinates._2),2).toInt).toInt
 }
 
 case class NodeEmpty(cost: Int = 0) extends Node {
@@ -50,54 +51,25 @@ def insertIntoQueue(prio_queue: Vector[NodeNonEmpty], next: Vector[NodeNonEmpty]
   //implicit val NodeOrdering: Ordering[NodeNonEmpty] = Ordering.by(_.cost)
   implicit val NodeOrdering: Ordering[NodeNonEmpty] = Ordering.by(_.getCostWithHeuristic(end))
 
-  def insertElem[T](x: T, lst: Vector[T])(implicit ord: Ordering[T]): Vector[T] = {
-    lst match {
-      case Vector() => Vector(x)
-      case y +: ys =>
-            if (ord.lteq(x,y)) {
-              x +: lst
-            } else {
-              y +: insertElem(x, ys)
-            }
-        }
-    }
-
-  if (prio_queue.isEmpty) {
-    next.sorted
+//  val prio_and_next =  (next ++ prio_queue)
+//  val prio_min = prio_and_next.min
+//  prio_min +: prio_and_next.filterNot(_ == prio_min)
+  if (next.isEmpty){
+    prio_queue
   } else {
-    if (next.isEmpty){
-      prio_queue
-    } else {
-      //next.sorted.foldLeft(prio_queue)((accum, elem) => insertElem(elem, accum)) // 3min 15s
-      (next ++ prio_queue).sorted // 2min 30s
-      }
+    (next ++ prio_queue).sorted
   }
 }
-
 
 def solve(field: Map[(Int,Int), Int], start: (Int,Int), end: (Int,Int)): Int = {
   @tailrec
   def iter(prio_queue: Vector[NodeNonEmpty]): Int = {
-//    println("-----")
-//    println(prio_queue.head.isEnd(end))
     if (prio_queue.head.isEnd(end)) {
       prio_queue.head.cost
     } else {
       val next = prio_queue.head.getNeighbors(field)
-
-//      println("head")
-//      println(prio_queue.head.coordinates,prio_queue.head.cost)
-//      println("Next:")
-//      next.foreach(x => println(x.coordinates, x.cost))
-//      println("prio_queue: ")
-//      prio_queue.tail.foreach(x => println(x.coordinates, x.cost))
-
       val next_filtered = next.filterNot(x => prio_queue.exists(y => y.coordinates == x.coordinates))
-      val new_prio_queue = insertIntoQueue(prio_queue.tail, next_filtered, end)
-//      println("Newprio: ")
-//      new_prio_queue.foreach(x => println(x.coordinates, x.cost))
-      //println(new_prio_queue.length)
-      iter(new_prio_queue)
+      iter(insertIntoQueue(prio_queue.tail, next_filtered, end))
     }
   }
   iter(Vector(NodeNonEmpty(start, 0, NodeEmpty())))
