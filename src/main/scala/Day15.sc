@@ -14,11 +14,11 @@ def parseInputs(inputs: List[String]): Map[(Int,Int), Int] = {
 }
 
 case class Node(coordinates: (Int,Int), cost: Int, previous: (Int,Int)) {
-  def getNeighbors(field: Map[(Int,Int), Int], prio_queue: Array[Node]): Array[Node] = {
-    Array((coordinates._1 + 1, coordinates._2),     (coordinates._1 - 1, coordinates._2),
+  def getNeighbors(field: Map[(Int,Int), Int], prio_queue: List[Node], visited: List[Node]): List[Node] = {
+    List((coordinates._1 + 1, coordinates._2),     (coordinates._1 - 1, coordinates._2),
          (coordinates._1    , coordinates._2 + 1), (coordinates._1    , coordinates._2 - 1))
       .filter(x => (x._1 <= 99) && x._1 >= 0 && x._2 <= 99 && x._2 >= 0)
-      .filterNot(x => x == previous || prio_queue.exists(y => x == y.coordinates))
+      .filterNot(x => x == previous || prio_queue.exists(y => x == y.coordinates) || visited.exists(y => x == y.coordinates))
       .map(x => Node(x, cost + field(x), coordinates))
   }
 
@@ -31,16 +31,16 @@ implicit val NodeOrdering: Ordering[Node] = Ordering.by(_.getCostWithHeuristic(e
 
 def solve(field: Map[(Int,Int), Int], start: (Int,Int), end: (Int,Int)): Int = {
   @tailrec
-  def iter(prio_queue: Array[Node]): Int = {
+  def iter(prio_queue: List[Node], visited: List[Node]): Int = {
     if (prio_queue.head.isEnd(end)) {
       prio_queue.head.cost
     } else {
-      val next = prio_queue.head.getNeighbors(field, prio_queue)
+      val next = prio_queue.head.getNeighbors(field, prio_queue, visited)
       val next_prio = (next ++ prio_queue.tail).sorted
-      iter(next_prio)
+      iter(next_prio, prio_queue.head +: visited)
     }
   }
-  iter(Array(Node(start, 0, (-1,-1))))
+  iter(List(Node(start, 0, (-1,-1))),List())
 }
 
 val field: Map[(Int,Int), Int] = parseInputs(inputs)
