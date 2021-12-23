@@ -18,13 +18,10 @@ case class Node(coordinates: (Int,Int), cost: Int) {
       .filter(x => (x._1 <= max_x) && x._1 >= 0 && x._2 <= max_y && x._2 >= 0)
       .filterNot(x => visited(x) < cost + field(x))
       .map(x => Node(x, cost + field(x)))
-//      .collect { case (x)
-//        if (visited(x) >= (cost + field(x))) => Node(x,cost + field(x))}
+//      .collect { case x if visited(x) >= (cost + field(x)) => Node(x,cost + field(x))}
   }
   def getCostWithHeuristic(end: (Int, Int)): Double = cost + abs(end._1 - coordinates._1) + abs(end._2 - coordinates._2)
 }
-
-//implicit val NodeOrdering: Ordering[Node] = Ordering.by(_.getCostWithHeuristic(end))
 
 def solve(field: Map[(Int,Int), Int], start: (Int,Int), end: (Int,Int)): Int = {
   val x_max = field.keys.map(_._1).max
@@ -39,8 +36,8 @@ def solve(field: Map[(Int,Int), Int], start: (Int,Int), end: (Int,Int)): Int = {
       val next = min_node.getNeighbors(field, x_max, y_max, visited)
       val next_prio =
         next ++
-          (prio_queue
-          .filterNot(x => x == min_node || next.exists(y => (y.coordinates == x.coordinates)  && (x.cost >= y.cost ))))
+          prio_queue
+          .filterNot(x => x == min_node || next.exists(y => (y.coordinates == x.coordinates)  && (x.cost >= y.cost )))
       iter(next_prio, visited.updated(min_node.coordinates, min(min_node.cost,visited(min_node.coordinates))))
     }
   }
