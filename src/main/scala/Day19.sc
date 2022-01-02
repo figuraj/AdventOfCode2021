@@ -18,30 +18,22 @@ def parseInputs(inputs: List[String], accum: List[Scanner] = List()): List[Scann
   }
 }
 
-@tailrec
-def permutationsWithDuplicates(lst: List[Int],
-                               permutations: List[List[Int]] = List(0,1,2).permutations.toList,
-                               accum: List[List[Int]] = List()): List[List[Int]] = {
-  if (permutations.isEmpty) {
-    accum
+def signCombinationsWithDuplicates(lst: List[Int]): List[List[Int]] = {
+  lst :: (for (i <- lst.indices) yield lst.patch(i, List(-1*lst(i)),1)).toList
+}
+
+def permutationsWithDuplicates(lst: List[Int], prefix: List[Int] = List()): List[List[Int]] = {
+  if (lst.isEmpty) {
+    List(prefix)
   } else {
-    val permutation = permutations.head
-    permutationsWithDuplicates(lst, permutations.tail, (lst(permutation.head) :: lst(permutation(1)) :: lst(permutation.last) :: List() ) :: accum)
+    (for (i <- lst.indices) yield permutationsWithDuplicates(lst.patch(i, Nil, 1), prefix :+ lst(i))).flatten.toList
   }
 }
 
-@tailrec
-def getAllRotations(coordinates: List[Int],
-                    accum: List[List[Int]] = List(),
-                    rot: List[List[Int]] = List(List(1,1,1),List(-1,1,1),List(1,-1,1),List(1,1,-1),
-                      List(-1,-1,1), List(-1,1,-1), List(1,-1,-1), List(-1,-1,-1))): List[List[Int]] = {
-  if (rot.isEmpty) {
-    accum
-  } else {
-    val temp = (coordinates zip rot.head).map(x => x._1 * x._2)
-    val new_accum = permutationsWithDuplicates(temp)
-    getAllRotations(coordinates, new_accum ::: accum, rot.tail)
-  }
+def getAllRotations(beacon: List[Int]): List[List[Int]] = {
+  val temp = signCombinationsWithDuplicates(beacon) // 1,2,3; -1,2,3; 1,-2,3; 1,2,-3
+  val temp2 = temp ++ temp.map(x => x.map(_ * -1)) //  1,2,3; -1,2,3; 1,-2,3; 1,2,-3; -1,-2,-3; 1,-2,-3; -1,2,-3; -1,-2,3
+  temp2.flatMap(x => permutationsWithDuplicates(x)) // 1,2,3 => 1,2,3; 1,3,2; 2,1,3; 2,3,1; 3,1,2; 3,2,1; total 48 rotations
 }
 
 @tailrec
@@ -49,10 +41,10 @@ def matchScanners(beacons: List[List[Int]], rotations: List[List[List[Int]]], ac
   if (rotations.isEmpty) {
     (List(),-1)
   } else {
-    val diff =  beacons.flatMap(x => rotations.head.map(y => (x zip y).map(x => x._1 - x._2)))
-    val x = diff.groupBy(identity).map(x => x._1 -> x._2.length).maxBy(_._2)
-    if (x._2 >= 12) {
-      (x._1, accum)
+    val scanner_shifts_all_pairs = beacons.flatMap(x => rotations.head.map(y => (x zip y).map(x => x._1 - x._2)))
+    val scanner_shift_most_frequent = scanner_shifts_all_pairs.groupBy(identity).map(x => x._1 -> x._2.length).maxBy(_._2)
+    if (scanner_shift_most_frequent._2 >= 12) {
+      (scanner_shift_most_frequent._1, accum)
     } else {
       matchScanners(beacons,rotations.tail, accum + 1)
     }
@@ -83,3 +75,4 @@ def solve(scanners: List[Scanner]): (Int, Int) = {
 
 val scanners = parseInputs(inputs)
 val (result_part1, result_part2) = solve(scanners)
+
