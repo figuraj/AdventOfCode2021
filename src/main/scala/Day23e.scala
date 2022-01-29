@@ -65,52 +65,17 @@ object Day23e extends App {
   val movesExtended = positionsExtended.groupBy(x => positionsExtended.filterNot(_ == x)).map(x => x._2.head -> x._1 )
 
 
-//  def filterOutMoves(amphipod: A, others: List[A]): List[((Int, Int), Int)] = {
-//    val position: (Int, Int) = amphipod.position
-//    val others_pos: List[(Int, Int)] = others.map(_.position)
-//    val raw_moves = moves(position)
-//    //println(s"Position:  $position")
-//    //println(s"Others: $others")
-//
-//    val temp: List[((Int, Int)) => Boolean] =
-//      ((x: (Int, Int))  => x.x == position.x) ::
-//        ((x: (Int, Int)) => x.y == 1 && !others.exists(_.position.x == x.x)) ::
-//        others.foldLeft(List(): List[((Int, Int)) => Boolean])((accum, oth) => {
-//          //println(accum)
-//          val elem = oth.position
-//          val temp: ((Int, Int)) => Boolean =
-//            if (position.x < elem.x) {
-//              if (elem.y == 0) x => x.x >= elem.x
-//              else x => (x.x == elem.x) && (x.y >= elem.y)
-//            } else if (position.x > elem.x) {
-//              if (elem.y == 0) x => x.x <= elem.x
-//              else x => (x.x == elem.x) && (x.y >= elem.y)
-//            } else { // position.x == elem.x, this can happen only at the door level of x
-//              if (elem.y == 0) x => true //accum.filterNot(x => x.x != elem.x) // position is at y > 0 thus blocked to go anywhere on x
-//              else if (elem.y == 1) x => true // position at y=2 and elem at y=1
-//              else x => x == elem // position at y=1 and elem at y=2
-//            }
-//          if (oth.atype != amphipod.atype && elem.y > 0) ((x: (Int, Int)) => x.x == elem.x) :: temp :: accum else temp :: accum
-//        })
-//
-//    raw_moves
-//      .filterNot(x => temp.exists(y => y(x)))
-//      //.filterNot(x => !others_pos.exists(_.x == x.x && List(2,4,6,8).contains(x.x) && x.y == 1)) // browsing through candidates, if the candidate happens to be at 2,4,6 or 8 I have to
-//      // check if there are other amphipods at the same position, if there are no amphipods then I cannot move to position 1
-//      .map(x => x -> (abs(position.x - x.x) + (if (position.x == x.x) x.y else position.y + x.y)))
-//  }
-
   def filterOutMoves(amphipod: A, others: List[A]): List[((Int, Int), Int)] = {
     val position: (Int, Int) = amphipod.position
     val others_pos: List[(Int, Int)] = others.map(_.position)
-    val raw_moves = movesExtended(position)
+    val raw_moves = moves(position)
     //println(s"Position:  $position")
     //println(s"Others: $others")
 
     val temp: List[((Int, Int)) => Boolean] =
-      ((x: (Int, Int)) => x.x == position.x) ::
-        ((x: (Int, Int)) => List(1,2,3).contains(x.y) && !others.exists(other => other.position.x == x.x && other.position.y > x.y)) ::
-          others.foldLeft(List(): List[((Int, Int)) => Boolean])((accum, oth) => {
+      ((x: (Int, Int))  => x.x == position.x) ::
+        ((x: (Int, Int)) => x.y == 1 && !others.exists(_.position.x == x.x)) ::
+        others.foldLeft(List(): List[((Int, Int)) => Boolean])((accum, oth) => {
           //println(accum)
           val elem = oth.position
           val temp: ((Int, Int)) => Boolean =
@@ -121,8 +86,9 @@ object Day23e extends App {
               if (elem.y == 0) x => x.x <= elem.x
               else x => (x.x == elem.x) && (x.y >= elem.y)
             } else { // position.x == elem.x, this can happen only at the door level of x
-              if (position.y > elem.y) x => true // if position is below other amphipod then its blocked to go out
-              else x => false // it can go anywhere (except the same x filtered elsewhere)
+              if (elem.y == 0) x => true //accum.filterNot(x => x.x != elem.x) // position is at y > 0 thus blocked to go anywhere on x
+              else if (elem.y == 1) x => true // position at y=2 and elem at y=1
+              else x => x == elem // position at y=1 and elem at y=2
             }
           if (oth.atype != amphipod.atype && elem.y > 0) ((x: (Int, Int)) => x.x == elem.x) :: temp :: accum else temp :: accum
         })
@@ -134,6 +100,40 @@ object Day23e extends App {
       .map(x => x -> (abs(position.x - x.x) + (if (position.x == x.x) x.y else position.y + x.y)))
   }
 
+//  def filterOutMoves(amphipod: A, others: List[A]): List[((Int, Int), Int)] = {
+//    val position: (Int, Int) = amphipod.position
+//    val others_pos: List[(Int, Int)] = others.map(_.position)
+//    val raw_moves = movesExtended(position)
+//    //println(s"Position:  $position")
+//    //println(s"Others: $others")
+//
+//    val temp: List[((Int, Int)) => Boolean] =
+//      ((x: (Int, Int)) => x.x == position.x) ::
+//        ((x: (Int, Int)) => List(1,2,3).contains(x.y) && !others.exists(other => other.position.x == x.x && other.position.y > x.y)) ::
+//          others.foldLeft(List(): List[((Int, Int)) => Boolean])((accum, oth) => {
+//          //println(accum)
+//          val elem = oth.position
+//          val temp: ((Int, Int)) => Boolean =
+//            if (position.x < elem.x) {
+//              if (elem.y == 0) x => x.x >= elem.x
+//              else x => (x.x == elem.x) && (x.y >= elem.y)
+//            } else if (position.x > elem.x) {
+//              if (elem.y == 0) x => x.x <= elem.x
+//              else x => (x.x == elem.x) && (x.y >= elem.y)
+//            } else { // position.x == elem.x, this can happen only at the door level of x
+//              if (position.y > elem.y) x => true // if position is below other amphipod then its blocked to go out
+//              else x => false // it can go anywhere (except the same x filtered elsewhere)
+//            }
+//          if (oth.atype != amphipod.atype && elem.y > 0) ((x: (Int, Int)) => x.x == elem.x) :: temp :: accum else temp :: accum
+//        })
+//
+//    raw_moves
+//      .filterNot(x => temp.exists(y => y(x)))
+//      //.filterNot(x => !others_pos.exists(_.x == x.x && List(2,4,6,8).contains(x.x) && x.y == 1)) // browsing through candidates, if the candidate happens to be at 2,4,6 or 8 I have to
+//      // check if there are other amphipods at the same position, if there are no amphipods then I cannot move to position 1
+//      .map(x => x -> (abs(position.x - x.x) + (if (position.x == x.x) x.y else position.y + x.y)))
+//  }
+
   def moveSingleAmphipod(amphipod: A, others: List[A], init_cost: Int): List[(Game, Int)] = {
     filterOutMoves(amphipod, others)
       //    .map(x => A(amphipod.atype,x._1) -> x._2)
@@ -142,11 +142,11 @@ object Day23e extends App {
       .map(x => Game((A(amphipod.atype,x._1) :: others).toSet) -> (init_cost + x._2*amphipod.cost))
   }
 
-  def moveAllAmphipods(game: Game, init_score: Int): Map[Game, Int] = {
+  def moveAllAmphipods(game: Game, init_score: Int): List[(Game,Int)] = {
     game.state.foldLeft(List(): List[(Game,Int)])((accum, elem) => {
       //println(accum)
-      accum ++ moveSingleAmphipod(elem, (game.state - elem).toList, init_score)
-    }).toMap
+      moveSingleAmphipod(elem, (game.state - elem).toList, init_score) ++ accum
+    })
   }
 
   def heuristic(here: Game): Int = {
@@ -162,22 +162,23 @@ object Day23e extends App {
 
   def solve(game: Game, end: Game): Int = {
     @tailrec
-    def iter(prio_queue: Map[Game, Int], visited: Map[Game, Int]): Int = {
+    def iter(prio_queue: Set[Game], expanded: Map[Game, Int]): Int = {
       //println(prio_queue)
-      if (prio_queue.isEmpty || visited(end) < 10000000 ) {
-        visited(end)
+      if (expanded.contains(end)) {
+        expanded(end)
       } else {
-        val min_node = prio_queue.minBy(x => heuristic(x._1) + x._2)
-        //val min_node = prio_queue.minBy(_._2)
-        //println(min_node)
-        val next = moveAllAmphipods(min_node._1, min_node._2) // all new games generated from this game
-          .filterNot(x => visited(x._1) < x._2) // some of the new games that are of lower cost or completely new
-          .filterNot(x => prio_queue.getOrElse(x._1,10000000) < x._2)
-        val next_prio = prio_queue.removed(min_node._1) ++ next
-        iter(next_prio, visited.updated(min_node._1, min(min_node._2,visited(min_node._1))))
+        val min_node = prio_queue.minBy(expanded)
+        //println(min_node, expanded(min_node))
+        val next = moveAllAmphipods(min_node, 0)
+          .filterNot(x => expanded.contains(x._1))
+        val next_prio = (prio_queue - min_node) ++ next.map(_._1)
+        //val next_expanded = expanded ++ next
+        val next_expanded = next.foldLeft(expanded)((accum, elem) => accum + (elem._1 -> (accum(min_node) + elem._2)))
+
+        iter(next_prio, next_expanded)
       }
     }
-    iter(Map((game,0)).withDefaultValue(100000000),Map().withDefaultValue(10000000))
+    iter(Set(game),Map(game -> 0))
   }
 
   def time[R](block: => R): R = {
@@ -191,11 +192,11 @@ object Day23e extends App {
   val end = Game(Set(A('A',(2,1)),A('A',(2,2)),A('B',(4,1)),A('B',(4,2)),A('C',(6,1)),A('C',(6,2)),A('D',(8,1)),A('D',(8,2))))
   val amphipods: Set[A] = parseInput(inputs)
 
-//  time {
-//    val result_part1 = solve(Game(amphipods),end)
-//    print(result_part1)}
+  time {
+    val result_part1 = solve(Game(amphipods),end)
+    print(result_part1)}
 
-  val start = Game(Set(A('A',(2,1)),A('A',(4,2)),A('B',(4,1)),A('B',(2,2)),A('C',(6,1)),A('C',(6,2)),A('D',(5,0)),A('D',(8,2))))
+  val start = Game(Set(A('A',(2,1)),A('A',(4,2)),A('B',(4,1)),A('B',(2,2)),A('C',(5,0)),A('C',(6,2)),A('D',(7,0)),A('D',(8,2))))
 
 //    time {println(solve(start,end))
 //          println(heuristic(start))}
@@ -208,11 +209,10 @@ object Day23e extends App {
 //  time {println(solve(startExtended,endExtended))
 //    println(heuristic(startExtended))}
 
-  val amphipodsExtended: Set[A] = parseInputPart2(inputs)
-
-  time {
-      val result_part2 = solve(Game(amphipodsExtended),endExtended)
-      print(result_part2)}
-
+//  val amphipodsExtended: Set[A] = parseInputPart2(inputs)
+//
+//  time {
+//      val result_part2 = solve(Game(amphipodsExtended),endExtended)
+//      print(result_part2)}
 }
 
