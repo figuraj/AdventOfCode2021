@@ -15,16 +15,16 @@ object Day15 extends App {
   }
 
   case class Node(coordinates: (Int, Int), cost: Int) {
-    def getNeighbors(field: Map[(Int, Int), Int], max_x: Int, max_y: Int, visited: Map[(Int, Int), Int]): Array[Node] = {
-      Array((coordinates._1 + 1, coordinates._2), (coordinates._1 - 1, coordinates._2),
-        (coordinates._1, coordinates._2 + 1), (coordinates._1, coordinates._2 - 1))
-        .filter(x => (x._1 <= max_x) && x._1 >= 0 && x._2 <= max_y && x._2 >= 0)
-        .filterNot(x => visited.contains(x))
-        .map(x => Node(x, cost + field(x)))
-      //      .collect { case x if visited(x) >= (cost + field(x)) => Node(x,cost + field(x))}
-    }
-
     def getCostWithHeuristic(end: (Int, Int)): Int = cost + abs(end._1 - coordinates._1) + abs(end._2 - coordinates._2)
+  }
+
+  def getNeighbors(coordinates: (Int, Int), field: Map[(Int, Int), Int], max_x: Int, max_y: Int, expanded: Map[(Int, Int), Int]): Set[(Int, Int)] = {
+    Set((coordinates._1 + 1, coordinates._2), (coordinates._1 - 1, coordinates._2),
+      (coordinates._1, coordinates._2 + 1), (coordinates._1, coordinates._2 - 1))
+      .filter(x => (x._1 <= max_x) && x._1 >= 0 && x._2 <= max_y && x._2 >= 0)
+      .filterNot(x => expanded.contains(x))
+      //.map(x => Node(x, cost + field(x)))
+    //      .collect { case x if visited(x) >= (cost + field(x)) => Node(x,cost + field(x))}
   }
 
   def solve(field: Map[(Int, Int), Int], start: (Int, Int), end: (Int, Int)): Int = {
@@ -32,18 +32,19 @@ object Day15 extends App {
     val y_max = field.keys.map(_._2).max
 
     @tailrec
-    def iter(prio_queue: Array[Node], visited: Map[(Int, Int), Int]): Int = {
-      if (visited.contains(end)) {
-        visited(end)
+    def iter(prio_queue: Set[(Int, Int)], expanded: Map[(Int, Int), Int]): Int = {
+      if (expanded.contains(end)) {
+        expanded(end)
       } else {
-        val min_node = prio_queue.minBy(_.cost)
-        val next = min_node.getNeighbors(field, x_max, y_max, visited)
-        val next_prio = next ++ prio_queue.filterNot(x => x == min_node)
-        iter(next_prio, visited.updated(min_node.coordinates, min_node.cost))
+        val min_node = prio_queue.minBy(expanded)
+        val next = getNeighbors(min_node, field, x_max, y_max, expanded)
+        val next_prio = (prio_queue - min_node) ++ next
+        val next_visited = next.foldLeft(expanded)((accum, elem) => accum + (elem -> (accum(min_node) + field(elem))))
+        iter(next_prio, next_visited)
       }
     }
 
-    iter(Array(Node(start, 0)), Map().withDefaultValue(10000000))
+    iter(Set(start), Map(start -> 0).withDefaultValue(10000000))
   }
 
 
