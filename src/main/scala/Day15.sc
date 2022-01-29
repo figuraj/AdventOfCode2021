@@ -16,7 +16,7 @@ case class Node(coordinates: (Int,Int), cost: Int) {
     Array((coordinates._1 + 1, coordinates._2),     (coordinates._1 - 1, coordinates._2),
          (coordinates._1    , coordinates._2 + 1), (coordinates._1    , coordinates._2 - 1))
       .filter(x => (x._1 <= max_x) && x._1 >= 0 && x._2 <= max_y && x._2 >= 0)
-      .filterNot(x => visited(x) < cost + field(x))
+      .filterNot(x => visited.contains(x))
       .map(x => Node(x, cost + field(x)))
 //      .collect { case x if visited(x) >= (cost + field(x)) => Node(x,cost + field(x))}
   }
@@ -29,16 +29,13 @@ def solve(field: Map[(Int,Int), Int], start: (Int,Int), end: (Int,Int)): Int = {
 
   @tailrec
   def iter(prio_queue: Array[Node], visited: Map[(Int,Int), Int]): Int = {
-    if (prio_queue.isEmpty) {
+    if (visited.contains(end)) {
       visited(end)
     } else {
-      val min_node = prio_queue.minBy(_.getCostWithHeuristic(end))
+      val min_node = prio_queue.minBy(_.cost)
       val next = min_node.getNeighbors(field, x_max, y_max, visited)
-      val next_prio =
-        next ++
-          prio_queue
-          .filterNot(x => x == min_node || next.exists(y => (y.coordinates == x.coordinates)  && (x.cost >= y.cost )))
-      iter(next_prio, visited.updated(min_node.coordinates, min(min_node.cost,visited(min_node.coordinates))))
+      val next_prio = next ++ prio_queue.filterNot(x => x == min_node)
+      iter(next_prio, visited.updated(min_node.coordinates, min_node.cost))
     }
   }
   iter(Array(Node(start, 0)),Map().withDefaultValue(10000000))
