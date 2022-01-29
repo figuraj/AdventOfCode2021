@@ -192,14 +192,14 @@ object Day23e extends App {
   val end = Game(Set(A('A',(2,1)),A('A',(2,2)),A('B',(4,1)),A('B',(4,2)),A('C',(6,1)),A('C',(6,2)),A('D',(8,1)),A('D',(8,2))))
   val amphipods: Set[A] = parseInput(inputs)
 
-  time {
-    val result_part1 = solve(Game(amphipods),end)
-    print(result_part1)}
+//  time {
+//    val result_part1 = solve(Game(amphipods),end)
+//    print(result_part1)}
 
-  val start = Game(Set(A('A',(2,1)),A('A',(4,2)),A('B',(4,1)),A('B',(2,2)),A('C',(5,0)),A('C',(6,2)),A('D',(7,0)),A('D',(8,2))))
+  val start = Game(Set(A('A',(2,1)),A('A',(4,2)),A('B',(4,1)),A('B',(2,2)),A('C',(6,1)),A('C',(6,2)),A('D',(5,0)),A('D',(8,2))))
 
-//    time {println(solve(start,end))
-//          println(heuristic(start))}
+    time {println(solve(start,end))
+          println(heuristic(start))}
 
   val startExtended = Game(Set(A('A',(2,1)),A('A',(4,2)),A('B',(4,1)),A('B',(2,2)),A('C',(6,1)),A('C',(6,2)),A('D',(5,0)),A('D',(8,2)),
                                 A('A',(2,3)),A('A',(2,4)),A('B',(4,3)),A('B',(4,4)),A('C',(6,3)),A('C',(6,4)),A('D',(8,3)),A('D',(8,4))))
